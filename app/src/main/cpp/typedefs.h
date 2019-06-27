@@ -45,6 +45,10 @@
 //#define WEBRTC_ARCH_ARMEL
 #define WEBRTC_ARCH_32_BITS
 #define WEBRTC_ARCH_LITTLE_ENDIAN
+#elif defined(__aarch64__)
+#define WEBRTC_ARCH_64_BITS
+#define WEBRTC_ARCH_LITTLE_ENDIAN
+#define WEBRTC_LITTLE_ENDIAN
 #elif defined(__MIPSEL__)
 #define WEBRTC_ARCH_32_BITS
 #define WEBRTC_ARCH_LITTLE_ENDIAN

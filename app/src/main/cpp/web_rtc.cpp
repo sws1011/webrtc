@@ -14,7 +14,7 @@ void *agcHandle = NULL;
 
 
 JNIEXPORT void JNICALL
-Java_com_sws_jni_WebRtcUtils_webRtcAgcProcess(JNIEnv *env, jclass type, jshortArray srcData_,
+Java_com_webrtc_jni_WebRtcUtils_webRtcAgcProcess(JNIEnv *env, jclass type, jshortArray srcData_,
                                           jshortArray desData_, jint srcLen) {
 
     jshort *srcData = env->GetShortArrayElements(srcData_, NULL);
@@ -66,7 +66,7 @@ Java_com_sws_jni_WebRtcUtils_webRtcAgcProcess(JNIEnv *env, jclass type, jshortAr
 }
 
 JNIEXPORT void JNICALL
-Java_com_sws_jni_WebRtcUtils_webRtcAgcFree(JNIEnv *env, jclass type) {
+Java_com_webrtc_jni_WebRtcUtils_webRtcAgcFree(JNIEnv *env, jclass type) {
     if (agcHandle != NULL) {
         int free = WebRtcAgc_Free(agcHandle);
         if (free == -1) {
@@ -77,8 +77,8 @@ Java_com_sws_jni_WebRtcUtils_webRtcAgcFree(JNIEnv *env, jclass type) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_sws_jni_WebRtcUtils_webRtcAgcInit(JNIEnv *env, jclass type, jlong minVolume, jlong maxVolume,
-                                       jlong freq) {
+Java_com_webrtc_jni_WebRtcUtils_webRtcAgcInit(JNIEnv *env, jclass type, jlong minVolume, jlong maxVolume,
+                                              jlong freq) {
     int agc = WebRtcAgc_Create(&agcHandle);
     if (agc == 0) {
         int16_t agcMode = kAgcModeFixedDigital;
@@ -106,17 +106,17 @@ Java_com_sws_jni_WebRtcUtils_webRtcAgcInit(JNIEnv *env, jclass type, jlong minVo
 NsHandle *pNs_inst = NULL;
 
 JNIEXPORT jshortArray JNICALL
-Java_com_sws_jni_WebRtcUtils_webRtcNsProcess(JNIEnv *env, jclass type, jint len, jshortArray proData_) {
+Java_com_webrtc_jni_WebRtcUtils_webRtcNsProcess(JNIEnv *env, jclass type, jint len, jshortArray proData_) {
 
     jshort *proData = env->GetShortArrayElements(proData_, NULL);
     int dataLen = env->GetArrayLength(proData_);
 
     if (pNs_inst) {
         //默认处理的是8k 16位采样率
+        short shBufferIn[160] = {0};
+        short shBufferOut[160] = {0};
         for (int i = 0; i < dataLen; i += sizeof(short) * 160) {
             if (dataLen - i >= sizeof(short) * 160) {
-                short shBufferIn[160] = {0};
-                short shBufferOut[160] = {0};
                 memcpy(shBufferIn, (proData + i), 160 * sizeof(short));
                 if (0 != WebRtcNs_Process(pNs_inst, shBufferIn, NULL, shBufferOut, NULL)) {
                     LOGE("Noise_Suppression WebRtcNs_Process err! \n");
@@ -135,7 +135,7 @@ Java_com_sws_jni_WebRtcUtils_webRtcNsProcess(JNIEnv *env, jclass type, jint len,
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sws_jni_WebRtcUtils_webRtcNsFree(JNIEnv *env, jclass type) {
+Java_com_webrtc_jni_WebRtcUtils_webRtcNsFree(JNIEnv *env, jclass type) {
     int _result = -1;
     if (pNs_inst) {
         _result = WebRtcNs_Free(pNs_inst);
@@ -146,7 +146,7 @@ Java_com_sws_jni_WebRtcUtils_webRtcNsFree(JNIEnv *env, jclass type) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_sws_jni_WebRtcUtils_webRtcNsInit(JNIEnv *env, jclass type, jint freq) {
+Java_com_webrtc_jni_WebRtcUtils_webRtcNsInit(JNIEnv *env, jclass type, jint freq) {
 
     //创建降噪句柄
     int val = WebRtcNs_Create(&pNs_inst);

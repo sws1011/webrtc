@@ -1,4 +1,4 @@
-package com.sws;
+package com.webrtc;
 
 import org.junit.Test;
 

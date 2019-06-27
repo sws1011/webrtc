@@ -1,4 +1,4 @@
-package com.sws.jni;
+package com.webrtc.jni;
 
 /**
  * Created by shiwenshui 2018/4/20 17:40

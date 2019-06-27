@@ -1,4 +1,4 @@
-package com.sws;
+package com.webrtc;
 
 import android.Manifest.permission;
 import android.content.pm.PackageManager;
@@ -21,7 +21,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.sws.jni.WebRtcUtils;
+import com.webrtc.jni.WebRtcUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -149,10 +149,10 @@ public class WebRtcActivity extends AppCompatActivity {
                     Toast.makeText(WebRtcActivity.this, "文件读写失败", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if (mProcessFile.exists() && mProcessFile.length() > 0) {
-                    Toast.makeText(getApplicationContext(), "完成",Toast.LENGTH_SHORT).show();
-                    return;
-                }
+//                if (mProcessFile.exists() && mProcessFile.length() > 0) {
+//                    Toast.makeText(getApplicationContext(), "完成",Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
                 process();
             }
         });
@@ -176,8 +176,8 @@ public class WebRtcActivity extends AppCompatActivity {
 
                 short[] nsProcessData = WebRtcUtils.webRtcNsProcess(shortData.length, shortData);
                 WebRtcUtils.webRtcAgcProcess(nsProcessData, processData, nsProcessData.length);
-
                 out.write(shortsToBytes(processData));
+//                out.write(shortsToBytes(nsProcessData));
             }
             Toast.makeText(getApplicationContext(), "完成",Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
