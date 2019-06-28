@@ -121,6 +121,8 @@ public class WebRtcActivity extends AppCompatActivity {
             return;
         }
         Log.e("sws", "srcPath==" + srcPath);
+        Log.e("sws", "AUDIO_PROCESS_FILE_PATH==" + AUDIO_PROCESS_FILE_PATH);
+        Log.e("sws", "AUDIO_FILE_PATH==" + AUDIO_FILE_PATH);
 
         mProcessFile = new File(AUDIO_PROCESS_FILE_PATH);
 
@@ -326,6 +328,9 @@ public class WebRtcActivity extends AppCompatActivity {
 
                     ins = new FileInputStream(file);
                     mAudioTrack.play();
+                    int sampleRate = mAudioTrack.getSampleRate();
+                    Log.e("sws", "audioFormat ==" + sampleRate);
+
                     byte[] buf = new byte[mMinBufferSize];
                     int len;
                     while ((len = ins.read(buf)) != -1 && mAudioTrack != null && isPlaying) {
@@ -334,8 +339,11 @@ public class WebRtcActivity extends AppCompatActivity {
                     if (mAudioTrack == null) {
                         return;
                     }
-                    mAudioTrack.stop();
-                } catch (IOException e) {
+                    if (isPlaying) {
+                        isPlaying = false;
+                        mAudioTrack.stop();
+                    }
+                } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
                     if (ins != null) {
