@@ -5,7 +5,7 @@
 
 #include <android/log.h>
 
-#define IS_DEBUG
+//#define IS_DEBUG
 
 #ifdef IS_DEBUG
 
