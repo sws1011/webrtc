@@ -365,16 +365,17 @@ public class WebRtcActivity extends AppCompatActivity {
                     while ((len = ins.read(buf)) != -1 && mAudioTrack != null && isPlaying) {
                         mAudioTrack.write(buf, 0, len);
                     }
-                    if (mAudioTrack == null) {
-                        return;
-                    }
+
                     if (isPlaying) {
                         isPlaying = false;
-                        mAudioTrack.stop();
+                        if (mAudioTrack != null) {
+                            mAudioTrack.stop();
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
+                    isPlaying = false;
                     if (ins != null) {
                         try {
                             ins.close();
