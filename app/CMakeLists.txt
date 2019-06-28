@@ -38,6 +38,7 @@ add_library( # Sets the name of the library.
              src/main/cpp/downsample_fast.c
              src/main/cpp/resample_by_2.c
              src/main/cpp/spl_sqrt.c
+             src/main/cpp/splitting_filter.c
 
      )
 

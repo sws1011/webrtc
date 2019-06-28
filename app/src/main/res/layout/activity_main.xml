@@ -26,4 +26,28 @@
         android:layout_below="@id/agc_ns"
         android:text="播放增益音频"/>
 
+    <RadioGroup
+        android:id="@+id/rg"
+        android:layout_marginTop="10dp"
+        android:layout_width="wrap_content"
+        android:layout_below="@id/playing_process"
+        android:layout_height="wrap_content">
+        <RadioButton
+            android:id="@+id/rb_8k"
+            android:text="测试 Hz_8000"
+            android:checked="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <RadioButton
+            android:id="@+id/rb_16k"
+            android:text="测试 Hz_16000"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <RadioButton
+            android:id="@+id/rb_32k"
+            android:text="测试 Hz_32000"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </RadioGroup>
+
 </RelativeLayout>
