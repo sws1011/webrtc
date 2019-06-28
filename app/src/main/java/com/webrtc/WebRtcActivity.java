@@ -82,14 +82,14 @@ public class WebRtcActivity extends AppCompatActivity {
     private boolean process32KData;
 
     private int mSampleRate;
-    private ExecutorService mSingleThreadExecutor;
+    private ExecutorService mThreadExecutor;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mSingleThreadExecutor = Executors.newScheduledThreadPool(2);
+        mThreadExecutor = Executors.newScheduledThreadPool(2);
         mSampleRate = SAMPLERATE_8K;
 
         initAudioRecord();
@@ -134,7 +134,7 @@ public class WebRtcActivity extends AppCompatActivity {
 
         if (!mFile.exists() || mFile.length() <= 0) {
             Log.e("sws", " init file-----------");
-            mSingleThreadExecutor.execute(new Runnable() {
+            mThreadExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
                     AssetManager assets = getAssets();
@@ -269,7 +269,7 @@ public class WebRtcActivity extends AppCompatActivity {
             return;
         }
         isProcessing = true;
-        mSingleThreadExecutor.execute(new Runnable() {
+        mThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 WebRtcUtils.webRtcAgcInit(0, 255, mSampleRate);
@@ -343,7 +343,7 @@ public class WebRtcActivity extends AppCompatActivity {
             isPlaying = false;
             mAudioTrack.stop();
         }
-        mSingleThreadExecutor.execute(new Runnable() {
+        mThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 InputStream ins = null;
@@ -391,8 +391,8 @@ public class WebRtcActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         stopPlay();
-        mSingleThreadExecutor.shutdownNow();
-        mSingleThreadExecutor = null;
+        mThreadExecutor.shutdownNow();
+        mThreadExecutor = null;
     }
 
     private void stopPlay() {
