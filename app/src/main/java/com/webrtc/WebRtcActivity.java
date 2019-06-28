@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by shiwenshui 2018/4/20 17:54
@@ -80,12 +82,14 @@ public class WebRtcActivity extends AppCompatActivity {
     private boolean process32KData;
 
     private int mSampleRate;
+    private ExecutorService mSingleThreadExecutor;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mSingleThreadExecutor = Executors.newScheduledThreadPool(2);
         mSampleRate = SAMPLERATE_8K;
 
         initAudioRecord();
@@ -130,22 +134,27 @@ public class WebRtcActivity extends AppCompatActivity {
 
         if (!mFile.exists() || mFile.length() <= 0) {
             Log.e("sws", " init file-----------");
-            AssetManager assets = getAssets();
-            try {
-                InputStream inputStream = assets.open(srcPath);
-                FileOutputStream fileOutputStream = new FileOutputStream(mFile);
-                byte[] buf = new byte[1024 * 1024];
-                int len;
-                while ((len = inputStream.read(buf)) != -1) {
-                    fileOutputStream.write(buf, 0, len);
+            mSingleThreadExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    AssetManager assets = getAssets();
+                    try {
+                        InputStream inputStream = assets.open(srcPath);
+                        FileOutputStream fileOutputStream = new FileOutputStream(mFile);
+                        byte[] buf = new byte[1024 * 1024];
+                        int len;
+                        while ((len = inputStream.read(buf)) != -1) {
+                            fileOutputStream.write(buf, 0, len);
+                        }
+                        inputStream.close();
+                        fileOutputStream.close();
+                        isInitialized = true;
+                        Log.e("sws", " init file end-----------");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-                inputStream.close();
-                fileOutputStream.close();
-                isInitialized = true;
-                Log.e("sws", " init file end-----------");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            });
         } else {
             Log.e("sws", "-----------");
             isInitialized = true;
@@ -170,7 +179,7 @@ public class WebRtcActivity extends AppCompatActivity {
         radioGroup.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                Log.e("sws", "checkedId ==" + checkedId);
+
                 switchDataSrc(checkedId);
             }
         });
@@ -253,45 +262,65 @@ public class WebRtcActivity extends AppCompatActivity {
         }
     }
 
+    private boolean isProcessing;
+
     private void process() {
-        WebRtcUtils.webRtcAgcInit(0, 255, mSampleRate);
-        WebRtcUtils.webRtcNsInit(mSampleRate);
-        try {
-            FileInputStream ins = new FileInputStream(mFile);
-            File outFile = new File(AUDIO_PROCESS_FILE_PATH);
-            FileOutputStream out = new FileOutputStream(outFile);
-
-            byte[] buf;
-            if (process32KData) {
-                buf = new byte[640];
-            } else {
-                buf = new byte[320];
-            }
-
-            while (ins.read(buf) != -1) {
-                short[] shortData = new short[buf.length >> 1];
-
-                short[] processData = new short[buf.length >> 1];
-                ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortData);
-
-                if (process32KData) {
-                    short[] nsProcessData = WebRtcUtils.webRtcNsProcess32k(shortData.length, shortData);
-                    WebRtcUtils.webRtcAgcProcess32k(nsProcessData, processData, nsProcessData.length);
-                } else {
-                    short[] nsProcessData = WebRtcUtils.webRtcNsProcess(shortData.length, shortData);
-                    WebRtcUtils.webRtcAgcProcess(nsProcessData, processData, nsProcessData.length);
-                }
-
-                out.write(shortsToBytes(processData));
-            }
-            Toast.makeText(getApplicationContext(), "完成", Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (isProcessing) {
+            return;
         }
-        Log.e("sws", "ns end======");
+        isProcessing = true;
+        mSingleThreadExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                WebRtcUtils.webRtcAgcInit(0, 255, mSampleRate);
+                WebRtcUtils.webRtcNsInit(mSampleRate);
+                try {
+                    FileInputStream ins = new FileInputStream(mFile);
+                    File outFile = new File(AUDIO_PROCESS_FILE_PATH);
+                    FileOutputStream out = new FileOutputStream(outFile);
 
-        WebRtcUtils.webRtcNsFree();
-        WebRtcUtils.webRtcAgcFree();
+                    byte[] buf;
+                    if (process32KData) {
+                        buf = new byte[640];
+                    } else {
+                        buf = new byte[320];
+                    }
+
+                    while (ins.read(buf) != -1) {
+
+                        short[] shortData = new short[buf.length >> 1];
+
+                        short[] processData = new short[buf.length >> 1];
+
+                        ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortData);
+
+                        if (process32KData) {
+                            short[] nsProcessData = WebRtcUtils.webRtcNsProcess32k(shortData.length, shortData);
+                            WebRtcUtils.webRtcAgcProcess32k(nsProcessData, processData, nsProcessData.length);
+                        } else {
+                            short[] nsProcessData = WebRtcUtils.webRtcNsProcess(shortData.length, shortData);
+                            WebRtcUtils.webRtcAgcProcess(nsProcessData, processData, nsProcessData.length);
+                        }
+
+                        out.write(shortsToBytes(processData));
+                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "处理完成", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    isProcessing = false;
+                    WebRtcUtils.webRtcNsFree();
+                    WebRtcUtils.webRtcAgcFree();
+                }
+                Log.e("sws", "ns end======");
+            }
+        });
+
     }
 
     private byte[] shortsToBytes(short[] data) {
@@ -314,7 +343,7 @@ public class WebRtcActivity extends AppCompatActivity {
             isPlaying = false;
             mAudioTrack.stop();
         }
-        new Thread(new Runnable() {
+        mSingleThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 InputStream ins = null;
@@ -355,13 +384,15 @@ public class WebRtcActivity extends AppCompatActivity {
                     }
                 }
             }
-        }).start();
+        });
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         stopPlay();
+        mSingleThreadExecutor.shutdownNow();
+        mSingleThreadExecutor = null;
     }
 
     private void stopPlay() {
