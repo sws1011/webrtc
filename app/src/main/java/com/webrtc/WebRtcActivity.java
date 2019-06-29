@@ -83,6 +83,8 @@ public class WebRtcActivity extends AppCompatActivity {
 
     private int mSampleRate;
     private ExecutorService mThreadExecutor;
+    private int mRtcNsInit;
+    private int mWebRtcNsInit;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -203,6 +205,7 @@ public class WebRtcActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!isInitialized && !mProcessFile.exists() || mProcessFile.length() <= 0) {
+                    Log.e("sws", "isInitialized ==" + isInitialized +": mProcessFile==" + mProcessFile.exists());
                     Toast.makeText(WebRtcActivity.this, "文件读写失败", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -274,6 +277,9 @@ public class WebRtcActivity extends AppCompatActivity {
             public void run() {
                 WebRtcUtils.webRtcAgcInit(0, 255, mSampleRate);
                 WebRtcUtils.webRtcNsInit(mSampleRate);
+
+                Log.e("sws", "====mSampleRate=" + mSampleRate +": process32KData=" + process32KData);
+
                 try {
                     FileInputStream ins = new FileInputStream(mFile);
                     File outFile = new File(AUDIO_PROCESS_FILE_PATH);
@@ -285,9 +291,7 @@ public class WebRtcActivity extends AppCompatActivity {
                     } else {
                         buf = new byte[320];
                     }
-
                     while (ins.read(buf) != -1) {
-
                         short[] shortData = new short[buf.length >> 1];
 
                         short[] processData = new short[buf.length >> 1];
@@ -295,14 +299,26 @@ public class WebRtcActivity extends AppCompatActivity {
                         ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortData);
 
                         if (process32KData) {
+//                            short[] nsProcessData =shortData;
                             short[] nsProcessData = WebRtcUtils.webRtcNsProcess32k(shortData.length, shortData);
                             WebRtcUtils.webRtcAgcProcess32k(nsProcessData, processData, nsProcessData.length);
+                            out.write(shortsToBytes(processData));
                         } else {
-                            short[] nsProcessData = WebRtcUtils.webRtcNsProcess(shortData.length, shortData);
-                            WebRtcUtils.webRtcAgcProcess(nsProcessData, processData, nsProcessData.length);
+                            short[] nsProcessData;
+                            if (selectId == R.id.rb_16k) {
+
+                               nsProcessData = WebRtcUtils.webRtcNsProcess16k(mSampleRate, shortData.length, shortData);
+                               WebRtcUtils.webRtcAgcProcess(nsProcessData, processData, shortData.length);
+                               out.write(shortsToBytes(processData));
+
+                            } else if (selectId == R.id.rb_8k){
+
+                                nsProcessData = WebRtcUtils.webRtcNsProcess8k(mSampleRate, shortData.length, shortData);
+                                WebRtcUtils.webRtcAgcProcess(nsProcessData, processData, nsProcessData.length);
+                                out.write(shortsToBytes(processData));
+                            }
                         }
 
-                        out.write(shortsToBytes(processData));
                     }
                     runOnUiThread(new Runnable() {
                         @Override

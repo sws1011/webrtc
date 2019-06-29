@@ -13,15 +13,65 @@ extern "C" {
 void *agcHandle = NULL;
 
 
+//JNIEXPORT void JNICALL
+//Java_com_webrtc_jni_WebRtcUtils_webRtcAgcProcess(JNIEnv *env, jclass type, jshortArray srcData_,
+//                                                 jshortArray desData_, jint srcLen) {
+//
+//    jshort *srcData = env->GetShortArrayElements(srcData_, NULL);
+//    jshort *desData = env->GetShortArrayElements(desData_, NULL);
+//
+//    jsize src_len = env->GetArrayLength(srcData_);
+//    int frameSize = 160;
+//
+//    int micLevelIn = 0;
+//    int micLevelOut = 0;
+////    LOGD("src_len=== %d", src_len);
+//    int16_t echo = 1;                                 //增益放大是否考虑回声影响
+//    uint8_t saturationWarning;
+//
+//    int iFrame;
+//    int nFrame = src_len / frameSize; //帧数
+//    int leftLen = src_len % frameSize; //最后一帧的大小
+//    int onceLen = frameSize;
+//    nFrame = (leftLen > 0) ? nFrame + 1 : nFrame;
+//
+//    short *agcIn = (short *) malloc(frameSize * sizeof(short));
+//    short *agcOut = (short *) malloc(frameSize * sizeof(short));
+//
+//    for (iFrame = 0; iFrame < nFrame; iFrame++) {
+//
+//        if (iFrame == nFrame - 1 && leftLen != 0) {
+//            onceLen = leftLen;
+//        }
+////        LOGE("WebRtcAgc_Process onceLen ==%d", onceLen);
+//        memcpy(agcIn, srcData + iFrame * frameSize, onceLen * sizeof(short));
+//
+//        int state = WebRtcAgc_Process(agcHandle, agcIn, NULL, 160, agcOut, NULL,
+//                                      micLevelIn, &micLevelOut, echo, &saturationWarning);
+//        if (state != 0) {
+//            LOGE("WebRtcAgc_Process error");
+//            break;
+//        }
+//        if (saturationWarning != 0) {
+//            LOGE("[AgcProc]: saturationWarning occured");
+//        }
+//        memcpy(desData + iFrame * frameSize, agcOut + iFrame * frameSize, onceLen * sizeof(short));
+//        micLevelIn = micLevelOut;
+//    }
+//
+//    free(agcIn);
+//    free(agcOut);
+//    env->ReleaseShortArrayElements(srcData_, srcData, 0);
+//    env->ReleaseShortArrayElements(desData_, desData, 0);
+//}
+
 JNIEXPORT void JNICALL
 Java_com_webrtc_jni_WebRtcUtils_webRtcAgcProcess(JNIEnv *env, jclass type, jshortArray srcData_,
                                                  jshortArray desData_, jint srcLen) {
-
     jshort *srcData = env->GetShortArrayElements(srcData_, NULL);
     jshort *desData = env->GetShortArrayElements(desData_, NULL);
 
     jsize src_len = env->GetArrayLength(srcData_);
-    int frameSize = 160;
 
     int micLevelIn = 0;
     int micLevelOut = 0;
@@ -29,38 +79,24 @@ Java_com_webrtc_jni_WebRtcUtils_webRtcAgcProcess(JNIEnv *env, jclass type, jshor
     int16_t echo = 1;                                 //增益放大是否考虑回声影响
     uint8_t saturationWarning;
 
-    int iFrame;
-    int nFrame = src_len / frameSize; //帧数
-    int leftLen = src_len % frameSize; //最后一帧的大小
-    int onceLen = frameSize;
-    nFrame = (leftLen > 0) ? nFrame + 1 : nFrame;
+    short shBufferIn[160] = {0};
+    short shBufferOut[160] = {0};
 
-    short *agcIn = (short *) malloc(frameSize * sizeof(short));
-    short *agcOut = (short *) malloc(frameSize * sizeof(short));
+    for (int i = 0; i < src_len; i += sizeof(short) * 80) {
+        if (src_len - i >= sizeof(short) * 80) {
 
-    for (iFrame = 0; iFrame < nFrame; iFrame++) {
+            memcpy(shBufferIn, (srcData + i), 160 * sizeof(short));
 
-        if (iFrame == nFrame - 1 && leftLen != 0) {
-            onceLen = leftLen;
+            if (0 != WebRtcAgc_Process(agcHandle, shBufferIn, NULL, 160, shBufferOut, NULL, micLevelIn, &micLevelOut, echo, &saturationWarning)) {
+                LOGE("WebRtcUtils_webRtcAgcProcess err! \n");
+            } else {
+                memcpy(desData + i, shBufferOut, 160 * sizeof(short));
+                LOGD("WebRtcUtils_webRtcAgcProcess success");
+                micLevelIn = micLevelOut;
+            }
         }
-//        LOGE("WebRtcAgc_Process onceLen ==%d", onceLen);
-        memcpy(agcIn, srcData + iFrame * frameSize, onceLen * sizeof(short));
-
-        int state = WebRtcAgc_Process(agcHandle, agcIn, NULL, 160, agcOut, NULL,
-                                      micLevelIn, &micLevelOut, echo, &saturationWarning);
-        if (state != 0) {
-            LOGE("WebRtcAgc_Process error");
-            break;
-        }
-        if (saturationWarning != 0) {
-            LOGE("[AgcProc]: saturationWarning occured");
-        }
-        memcpy(desData + iFrame * frameSize, agcOut + iFrame * frameSize, onceLen * sizeof(short));
-        micLevelIn = micLevelOut;
     }
 
-    free(agcIn);
-    free(agcOut);
     env->ReleaseShortArrayElements(srcData_, srcData, 0);
     env->ReleaseShortArrayElements(desData_, desData, 0);
 }
@@ -92,7 +128,7 @@ Java_com_webrtc_jni_WebRtcUtils_webRtcAgcProcess32k(JNIEnv *env, jclass type, js
     memset(Synthesis_state1, 0, sizeof(Synthesis_state1));
     memset(Synthesis_state12, 0, sizeof(Synthesis_state12));
 
-    for (int i = 0; i < src_len; i += sizeof(short) * 320) {
+    for (int i = 0; i < src_len; i += sizeof(short) * 160) {
         if (src_len - i >= sizeof(short) * 160) {
 
             short shInL[160], shInH[160];
@@ -140,7 +176,7 @@ Java_com_webrtc_jni_WebRtcUtils_webRtcAgcInit(JNIEnv *env, jclass type, jlong mi
                                      (uint32_t) freq);
         if (agcInit == 0) {
             WebRtcAgc_config_t agcConfig;
-            agcConfig.compressionGaindB = 20;
+            agcConfig.compressionGaindB = 23;
             agcConfig.limiterEnable = 1;
             agcConfig.targetLevelDbfs = 3;
 
@@ -160,23 +196,50 @@ Java_com_webrtc_jni_WebRtcUtils_webRtcAgcInit(JNIEnv *env, jclass type, jlong mi
 NsHandle *pNs_inst = NULL;
 
 JNIEXPORT jshortArray JNICALL
-Java_com_webrtc_jni_WebRtcUtils_webRtcNsProcess(JNIEnv *env, jclass type, jint len, jshortArray proData_) {
+Java_com_webrtc_jni_WebRtcUtils_webRtcNsProcess16k(JNIEnv *env, jclass type, jint freq, jint len, jshortArray proData_) {
 
     jshort *proData = env->GetShortArrayElements(proData_, NULL);
     int dataLen = env->GetArrayLength(proData_);
-
+//    LOGD("webRtcNsProcess dataLen=== %d", dataLen);
     if (pNs_inst) {
-        //默认处理的是8k 16位采样率
-        short shBufferIn[160] = {0};
-        short shBufferOut[160] = {0};
-        for (int i = 0; i < dataLen; i += sizeof(short) * 160) {
-            if (dataLen - i >= sizeof(short) * 160) {
-                memcpy(shBufferIn, (proData + i), 160 * sizeof(short));
+        for (int i = 0; i < dataLen; i += 160) {
+            if (dataLen - i >= 160) {
+                short shBufferIn[160] = {0};
+                short shBufferOut[160] = {0};
+                memcpy(shBufferIn, (char*)(proData + i), 160 * sizeof(short));
                 if (0 != WebRtcNs_Process(pNs_inst, shBufferIn, NULL, shBufferOut, NULL)) {
                     LOGE("Noise_Suppression WebRtcNs_Process err! \n");
                 }
                 memcpy(proData + i, shBufferOut, 160 * sizeof(short));
-                LOGD("Noise_Suppression WebRtcNs_Process");
+                LOGD("Noise_Suppression WebRtcNs_Process success");
+            }
+        }
+    } else {
+        LOGD("pNs_inst null==");
+    }
+
+    env->ReleaseShortArrayElements(proData_, proData, 0);
+
+    return proData_;
+}
+
+JNIEXPORT jshortArray JNICALL
+Java_com_webrtc_jni_WebRtcUtils_webRtcNsProcess8k(JNIEnv *env, jclass type, jint freq, jint len, jshortArray proData_) {
+
+    jshort *proData = env->GetShortArrayElements(proData_, NULL);
+    int dataLen = env->GetArrayLength(proData_);
+//    LOGD("webRtcNsProcess dataLen=== %d", dataLen);
+    if (pNs_inst) {
+        for (int i = 0; i < dataLen; i += 80) {
+            if (dataLen - i >= 80) {
+                short shBufferIn[80] = {0};
+                short shBufferOut[80] = {0};
+                memcpy(shBufferIn, (char*)(proData + i), 80 * sizeof(short));
+                if (0 != WebRtcNs_Process(pNs_inst, shBufferIn, NULL, shBufferOut, NULL)) {
+                    LOGE("Noise_Suppression WebRtcNs_Process err! \n");
+                }
+                memcpy(proData + i, shBufferOut, 80 * sizeof(short));
+                LOGD("Noise_Suppression WebRtcNs_Process success");
             }
         }
     } else {
@@ -207,7 +270,7 @@ Java_com_webrtc_jni_WebRtcUtils_webRtcNsProcess32k(JNIEnv *env, jclass type, jin
         memset(Synthesis_state1, 0, sizeof(Synthesis_state1));
         memset(Synthesis_state12, 0, sizeof(Synthesis_state12));
 
-        for (int i = 0; i < dataLen; i += sizeof(short) * 320) {
+        for (int i = 0; i < dataLen; i += sizeof(short) * 160) {
             if (dataLen - i >= sizeof(short) * 160) {
 
                 short shInL[160], shInH[160];

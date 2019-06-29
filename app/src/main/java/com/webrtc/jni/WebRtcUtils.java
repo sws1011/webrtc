@@ -6,11 +6,12 @@ package com.webrtc.jni;
 public class WebRtcUtils {
 
     static {
-        System.loadLibrary("WebRtcAudio");
+        System.loadLibrary("WRtcAudio");
     }
 
     public static native void webRtcNsInit(int freq);
-    public static native short[] webRtcNsProcess(int len, short[] proData);
+    public static native short[] webRtcNsProcess16k(int sampleRate, int len, short[] proData);
+    public static native short[] webRtcNsProcess8k(int sampleRate, int len, short[] proData);
     public static native short[] webRtcNsProcess32k(int len, short[] proData);
     public static native int webRtcNsFree();
 

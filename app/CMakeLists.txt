@@ -9,38 +9,38 @@ cmake_minimum_required(VERSION 3.4.1)
 # You can define multiple libraries, and CMake builds it for you.
 # Gradle automatically packages shared libraries with your APK.
 
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic" )
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_definitions(-DFIXED_POINT -DUSE_KISS_FFT -DHAVE_CONFIG_H)
 
 add_library( # Sets the name of the library.
-             WebRtcAudio
+        WRtcAudio
 
-             # Sets the library as a shared library.
-             SHARED
+        # Sets the library as a shared library.
+        SHARED
 
-             # Provides a relative path to your source file(s).
-             # Associated headers in the same location as their source
-             # file are automatically included.
-             src/main/cpp/web_rtc.cpp
+        # Provides a relative path to your source file(s).
+        # Associated headers in the same location as their source
+        # file are automatically included.
+        src/main/cpp/web_rtc.cpp
 
-             src/main/cpp/noise_suppression.c
-             src/main/cpp/fft4g.c
-             src/main/cpp/ns_core.c
+        src/main/cpp/noise_suppression.c
+        src/main/cpp/fft4g.c
+        src/main/cpp/ns_core.c
 
-             src/main/cpp/analog_agc.c
-             src/main/cpp/digital_agc.c
-             src/main/cpp/division_operations.c
-             src/main/cpp/copy_set_operations.c
-             src/main/cpp/dot_product_with_scale.c
-             src/main/cpp/downsample_fast.c
-             src/main/cpp/resample_by_2.c
-             src/main/cpp/spl_sqrt.c
-             src/main/cpp/splitting_filter.c
+        src/main/cpp/analog_agc.c
+        src/main/cpp/digital_agc.c
+        src/main/cpp/division_operations.c
+        src/main/cpp/copy_set_operations.c
+        src/main/cpp/dot_product_with_scale.c
+        src/main/cpp/downsample_fast.c
+        src/main/cpp/resample_by_2.c
+        src/main/cpp/spl_sqrt.c
+        src/main/cpp/splitting_filter.c
 
-     )
+        )
 
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -50,19 +50,19 @@ add_library( # Sets the name of the library.
 # completing its build.
 
 find_library( # Sets the name of the path variable.
-              log-lib
+        log-lib
 
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              log )
+        # Specifies the name of the NDK library that
+        # you want CMake to locate.
+        log)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in the
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-                       WebRtcAudio
+        WRtcAudio
 
-                       # Links the target library to the log library
-                       # included in the NDK.
-                       ${log-lib} )
+        # Links the target library to the log library
+        # included in the NDK.
+        ${log-lib})
