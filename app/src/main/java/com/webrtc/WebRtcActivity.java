@@ -281,11 +281,13 @@ public class WebRtcActivity extends AppCompatActivity {
                 WebRtcUtils.webRtcNsInit(mSampleRate);
 
                 Log.e("sws", "====mSampleRate=" + mSampleRate +": process32KData=" + process32KData);
-
+                FileInputStream ins = null;
+                FileOutputStream out = null;
                 try {
-                    FileInputStream ins = new FileInputStream(mFile);
+                    File inFile = mFile;
+                    ins = new FileInputStream(inFile);
                     File outFile = new File(AUDIO_PROCESS_FILE_PATH);
-                    FileOutputStream out = new FileOutputStream(outFile);
+                    out = new FileOutputStream(outFile);
 
                     byte[] buf;
                     if (process32KData) {
@@ -334,6 +336,20 @@ public class WebRtcActivity extends AppCompatActivity {
                     isProcessing = false;
                     WebRtcUtils.webRtcNsFree();
                     WebRtcUtils.webRtcAgcFree();
+                    if (out != null) {
+                        try {
+                            out.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (ins != null) {
+                        try {
+                            ins.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
                 Log.e("sws", "ns end======");
             }
