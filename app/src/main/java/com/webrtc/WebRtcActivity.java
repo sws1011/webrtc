@@ -91,7 +91,7 @@ public class WebRtcActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mThreadExecutor = Executors.newScheduledThreadPool(2);
+        mThreadExecutor = Executors.newScheduledThreadPool(3);
         mSampleRate = SAMPLERATE_8K;
 
         initAudioRecord();
@@ -167,8 +167,10 @@ public class WebRtcActivity extends AppCompatActivity {
         stopPlay();
         mMinBufferSize = AudioRecord.getMinBufferSize(mSampleRate, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, mSampleRate, AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, mMinBufferSize, AudioTrack.MODE_STREAM);
+        if (mAudioTrack == null) {
+            mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, mSampleRate, AudioFormat.CHANNEL_OUT_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT, mMinBufferSize, AudioTrack.MODE_STREAM);
+        }
     }
 
     private int selectId = -1;
