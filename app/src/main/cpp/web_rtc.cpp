@@ -196,50 +196,35 @@ Java_com_webrtc_jni_WebRtcUtils_webRtcAgcInit(JNIEnv *env, jclass type, jlong mi
 NsHandle *pNs_inst = NULL;
 
 JNIEXPORT jshortArray JNICALL
-Java_com_webrtc_jni_WebRtcUtils_webRtcNsProcess16k(JNIEnv *env, jclass type, jint freq, jint len, jshortArray proData_) {
+Java_com_webrtc_jni_WebRtcUtils_webRtcNsProcess(JNIEnv *env, jclass type, jint freq, jint len, jshortArray proData_) {
 
     jshort *proData = env->GetShortArrayElements(proData_, NULL);
     int dataLen = env->GetArrayLength(proData_);
 //    LOGD("webRtcNsProcess dataLen=== %d", dataLen);
+    int size = freq / 100;
+
     if (pNs_inst) {
-        for (int i = 0; i < dataLen; i += 160) {
-            if (dataLen - i >= 160) {
-                short shBufferIn[160] = {0};
-                short shBufferOut[160] = {0};
-                memcpy(shBufferIn, (char*)(proData + i), 160 * sizeof(short));
-                if (0 != WebRtcNs_Process(pNs_inst, shBufferIn, NULL, shBufferOut, NULL)) {
-                    LOGE("Noise_Suppression WebRtcNs_Process err! \n");
+        for (int i = 0; i < dataLen; i += size) {
+            if (dataLen - i >= size) {
+                if (size == 80) {
+                    short shBufferIn[80] = {0};
+                    short shBufferOut[80] = {0};
+                    memcpy(shBufferIn, (char*)(proData + i), size * sizeof(short));
+                    if (0 != WebRtcNs_Process(pNs_inst, shBufferIn, NULL, shBufferOut, NULL)) {
+                        LOGE("Noise_Suppression WebRtcNs_Process err! \n");
+                    }
+                    memcpy(proData + i, shBufferOut, size * sizeof(short));
+                    LOGD("Noise_Suppression WebRtcNs_Process success");
+                } else {
+                    short shBufferIn[160] = {0};
+                    short shBufferOut[160] = {0};
+                    memcpy(shBufferIn, (char*)(proData + i), size * sizeof(short));
+                    if (0 != WebRtcNs_Process(pNs_inst, shBufferIn, NULL, shBufferOut, NULL)) {
+                        LOGE("Noise_Suppression WebRtcNs_Process err! \n");
+                    }
+                    memcpy(proData + i, shBufferOut, size * sizeof(short));
+                    LOGD("Noise_Suppression WebRtcNs_Process success");
                 }
-                memcpy(proData + i, shBufferOut, 160 * sizeof(short));
-                LOGD("Noise_Suppression WebRtcNs_Process success");
-            }
-        }
-    } else {
-        LOGD("pNs_inst null==");
-    }
-
-    env->ReleaseShortArrayElements(proData_, proData, 0);
-
-    return proData_;
-}
-
-JNIEXPORT jshortArray JNICALL
-Java_com_webrtc_jni_WebRtcUtils_webRtcNsProcess8k(JNIEnv *env, jclass type, jint freq, jint len, jshortArray proData_) {
-
-    jshort *proData = env->GetShortArrayElements(proData_, NULL);
-    int dataLen = env->GetArrayLength(proData_);
-//    LOGD("webRtcNsProcess dataLen=== %d", dataLen);
-    if (pNs_inst) {
-        for (int i = 0; i < dataLen; i += 80) {
-            if (dataLen - i >= 80) {
-                short shBufferIn[80] = {0};
-                short shBufferOut[80] = {0};
-                memcpy(shBufferIn, (char*)(proData + i), 80 * sizeof(short));
-                if (0 != WebRtcNs_Process(pNs_inst, shBufferIn, NULL, shBufferOut, NULL)) {
-                    LOGE("Noise_Suppression WebRtcNs_Process err! \n");
-                }
-                memcpy(proData + i, shBufferOut, 80 * sizeof(short));
-                LOGD("Noise_Suppression WebRtcNs_Process success");
             }
         }
     } else {

@@ -310,14 +310,13 @@ public class WebRtcActivity extends AppCompatActivity {
                         } else {
                             short[] nsProcessData;
                             if (selectId == R.id.rb_16k) {
-
-                               nsProcessData = WebRtcUtils.webRtcNsProcess16k(mSampleRate, shortData.length, shortData);
+                               nsProcessData = WebRtcUtils.webRtcNsProcess(mSampleRate, shortData.length, shortData);
                                WebRtcUtils.webRtcAgcProcess(nsProcessData, processData, shortData.length);
                                out.write(shortsToBytes(processData));
 
                             } else if (selectId == R.id.rb_8k){
 
-                                nsProcessData = WebRtcUtils.webRtcNsProcess8k(mSampleRate, shortData.length, shortData);
+                                nsProcessData = WebRtcUtils.webRtcNsProcess(mSampleRate, shortData.length, shortData);
                                 WebRtcUtils.webRtcAgcProcess(nsProcessData, processData, nsProcessData.length);
                                 out.write(shortsToBytes(processData));
                             }
