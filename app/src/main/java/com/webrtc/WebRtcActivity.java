@@ -298,7 +298,7 @@ public class WebRtcActivity extends AppCompatActivity {
                         //TODO
                         /*
                          * 测试发现，32k采样率,数据buf越少，增益后可能有滋滋的声音
-                         * （每次按640个字节处理，增益后会有滋滋的声音）
+                         *
                          */
                         buf = new byte[640 * 40];
                     } else {
